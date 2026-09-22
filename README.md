@@ -1,4 +1,4 @@
-# 📦 Sistema Dinámico de Trazabilidad Total e Inventario — Nestlé CD Guayaquil
+# Sistema Dinámico de Trazabilidad Total e Inventario
 
 ![Estado](https://img.shields.io/badge/Estado-Prototipo_Final-success)
 ![Hackathon](https://img.shields.io/badge/Evento-Hackathon_Innolab_Desafío_2-blue)
