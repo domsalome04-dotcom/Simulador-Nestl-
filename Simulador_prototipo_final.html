@@ -3,82 +3,91 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Simulador paso a paso — Sistema Dinámico Nestlé · Innolab ESPOL</title>
+<title>Simulador Avanzado — Sistema Dinámico Nestlé · Innolab ESPOL</title>
 <style>
   :root {
     --bg: #090e17; --panel: rgba(16, 24, 38, 0.96); --line: #233149;
-    --accent: #41c99a; --accent2: #4facfe; --amber: #f0a834; --red: #ef5f52; --purple: #9b8cff;
+    --accent: #00e676; /* Verde tecnológico más vibrante */ --accent2: #00b0ff; --amber: #ffca28; --red: #ff5252; --purple: #b388ff;
     --txt: #e8edf4; --mut: #8a97ac;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', system-ui, Tahoma, sans-serif; background: var(--bg); color: var(--txt); overflow: hidden; display: flex; height: 100vh; }
+  body { font-family: 'Segoe UI', system-ui, Tahoma, sans-serif; background: var(--bg); color: var(--txt); overflow: hidden; display: flex; height: 100vh; margin: 0; }
   #sim-container { flex: 1; position: relative; }
   #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
 
-  #hdr { position: absolute; top: 0; left: 0; right: 0; z-index: 12; padding: 14px 22px; background: linear-gradient(180deg, rgba(9,14,23,0.96), transparent); pointer-events: none; display: flex; justify-content: space-between;}
-  #hdr h1 { font-size: 17px; font-weight: 800; color: #fff; margin-bottom: 4px; }
-  #hdr p { font-size: 11.5px; color: var(--accent2); font-weight: 700; letter-spacing: 1px; }
-  #wms-status { background: rgba(16,24,38,0.85); border: 1px solid var(--line); padding: 9px 14px; border-radius: 8px; font-size: 11px; font-family: monospace; color: var(--accent); text-align: right; backdrop-filter: blur(5px); }
-  #wms-status span { display: block; color: var(--mut); font-family: sans-serif; font-size: 10px; margin-bottom: 3px; }
+  #hdr { position: absolute; top: 0; left: 0; right: 0; z-index: 12; padding: 16px 24px; background: linear-gradient(180deg, rgba(9,14,23,0.98), rgba(9,14,23,0)); pointer-events: none; display: flex; justify-content: space-between; align-items: flex-start;}
+  #hdr h1 { font-size: 19px; font-weight: 800; color: #fff; margin-bottom: 4px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+  #hdr p { font-size: 12px; color: var(--accent); font-weight: 700; letter-spacing: 1.5px; }
+  #wms-status { background: rgba(16,24,38,0.9); border: 1px solid var(--accent); padding: 10px 16px; border-radius: 8px; font-size: 12px; font-family: monospace; color: var(--accent); text-align: right; backdrop-filter: blur(8px); box-shadow: 0 4px 15px rgba(0, 230, 118, 0.15); pointer-events: auto;}
+  #wms-status span { display: block; color: #fff; font-family: sans-serif; font-size: 10px; margin-bottom: 4px; font-weight: bold; text-transform: uppercase; }
 
-  #steps-panel { position:absolute; top:78px; left:18px; z-index:11; width:280px; display:flex; flex-direction:column; gap:7px; pointer-events:auto; }
-  .step-item { background: rgba(16,24,38,0.88); border:1px solid var(--line); border-radius:10px; padding:9px 11px; display:flex; gap:10px; align-items:flex-start; backdrop-filter: blur(7px); transition:.25s; opacity:.58; }
-  .step-item.active { opacity:1; border-color: var(--accent2); box-shadow: 0 0 0 1px rgba(79,172,254,.25), 0 6px 18px rgba(0,0,0,.35); transform: translateX(3px); }
-  .step-item .n { width:24px; height:24px; border-radius:7px; background:#1a2538; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0; }
-  .step-item.active .n { background: var(--accent2); color:#04182b; border-color: var(--accent2); }
-  .step-item .tx b { font-size:12px; display:block; margin-bottom:2px; }
-  .step-item .tx span { font-size:10.5px; color:var(--mut); line-height:1.35; display:block; }
+  #steps-panel { position:absolute; top:85px; left:20px; z-index:11; width:310px; display:flex; flex-direction:column; gap:8px; pointer-events:auto; }
+  .step-item { background: rgba(16,24,38,0.85); border:1px solid var(--line); border-radius:12px; padding:12px; display:flex; gap:12px; align-items:flex-start; backdrop-filter: blur(10px); transition: all 0.3s ease; opacity:0.6; cursor: default;}
+  .step-item.active { opacity:1; border-color: var(--accent2); box-shadow: 0 0 0 1px rgba(0,176,255,0.3), 0 8px 20px rgba(0,0,0,0.4); transform: translateX(5px); background: rgba(20, 32, 50, 0.95); }
+  .step-item .n { width:26px; height:26px; border-radius:8px; background:#1a2538; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex-shrink:0; color: #fff; transition: 0.3s; }
+  .step-item.active .n { background: var(--accent2); color:#000; border-color: var(--accent2); }
+  .step-item .tx b { font-size:13px; display:block; margin-bottom:3px; color: #fff; }
+  .step-item .tx span { font-size:11px; color:var(--mut); line-height:1.4; display:block; }
 
-  #story-box { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 10; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px; width: 90%; max-width: 660px; box-shadow: 0 10px 40px rgba(0,0,0,0.7); backdrop-filter: blur(10px); pointer-events:auto; }
-  .story-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:9px;}
-  .step-tag { display: inline-block; padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
-  .step-counter { font-size:11px; color:var(--mut); font-weight:700; }
-  #story-title { font-size: 16.5px; color: #fff; margin-bottom: 7px; }
-  #story-desc { font-size: 13px; color: #c8d2e0; line-height: 1.5; min-height:58px; }
-  #story-controls { display:flex; gap:8px; margin-top:14px; }
-  #story-controls button { flex:1; background: rgba(255,255,255,0.06); border:1px solid var(--line); color:var(--txt); padding:10px; border-radius:8px; font-size:12.5px; font-weight:700; cursor:pointer; }
-  #story-controls button:hover:not(:disabled) { background: rgba(255,255,255,0.14); }
-  #story-controls button:disabled{ opacity:.35; cursor:not-allowed; }
+  #story-box { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); z-index: 10; background: rgba(16, 24, 38, 0.95); border: 1px solid var(--line); border-radius: 16px; padding: 20px 28px; width: 92%; max-width: 720px; box-shadow: 0 15px 50px rgba(0,0,0,0.8); backdrop-filter: blur(12px); pointer-events:auto; }
+  .story-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+  .step-tag { display: inline-block; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+  .step-counter { font-size:12px; color:var(--mut); font-weight:700; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 6px;}
+  #story-title { font-size: 18px; color: #fff; margin-bottom: 8px; font-weight: 700; }
+  #story-desc { font-size: 14px; color: #c8d2e0; line-height: 1.6; min-height:64px; }
+  #story-controls { display:flex; gap:10px; margin-top:16px; }
+  #story-controls button { flex:1; background: rgba(255,255,255,0.08); border:1px solid var(--line); color:var(--txt); padding:12px; border-radius:10px; font-size:13.5px; font-weight:700; cursor:pointer; transition: 0.2s; }
+  #story-controls button:hover:not(:disabled) { background: rgba(255,255,255,0.15); transform: translateY(-1px); }
+  #story-controls button:disabled{ opacity:.4; cursor:not-allowed; transform: none; }
   #story-controls button.primary { background: var(--accent2); color:#04182b; border-color:var(--accent2); }
-  #story-controls button.primary:hover { background:#6bbdff; }
+  #story-controls button.primary:hover { background:#33c4ff; box-shadow: 0 4px 12px rgba(0,176,255,0.4); }
 
-  #tech-panel { width: 400px; background: #0f1624; border-left: 1px solid var(--line); z-index: 10; display: flex; flex-direction: column; box-shadow: -10px 0 30px rgba(0,0,0,0.4); }
-  .tech-header { padding: 18px 22px; background: #131c2d; border-bottom: 1px solid var(--line); }
-  .tech-header h2 { font-size: 15px; color: #fff; }
-  .tech-header p { font-size: 11.5px; color: var(--mut); margin-top: 4px; }
-  .tech-content { flex: 1; overflow-y: auto; padding: 18px; }
+  #tech-panel { width: 420px; background: #0b111a; border-left: 1px solid var(--line); z-index: 10; display: flex; flex-direction: column; box-shadow: -10px 0 40px rgba(0,0,0,0.6); }
+  .tech-header { padding: 22px 26px; background: #111a26; border-bottom: 1px solid var(--line); }
+  .tech-header h2 { font-size: 17px; color: #fff; font-weight: 700; }
+  .tech-header p { font-size: 12px; color: var(--mut); margin-top: 6px; }
+  .tech-content { flex: 1; overflow-y: auto; padding: 22px 26px; }
 
-  #dash-mock { background:#fff; color:#1a1a1a; border-radius:14px; overflow:hidden; margin-bottom:18px; box-shadow:0 8px 24px rgba(0,0,0,.4); border:1px solid #d8d6cc; }
-  #dash-mock .db-top { background:#0f6e56; color:#fff; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; }
-  #dash-mock .db-top b { font-size:12.5px; }
-  #dash-mock .db-top span { font-size:9.5px; opacity:.85; }
-  #dash-mock .db-body { padding:12px 14px; }
-  .db-kpis { display:flex; gap:8px; margin-bottom:10px; }
-  .db-kpi { flex:1; background:#f4f2ec; border-radius:8px; padding:7px 8px; text-align:center; }
-  .db-kpi .v { font-size:16px; font-weight:800; color:#0f6e56; }
-  .db-kpi .l { font-size:8.5px; color:#666; margin-top:1px; }
-  .db-evcount { background:#faeeda; border-radius:8px; padding:7px 10px; font-size:10.5px; color:#7a4e08; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;}
-  .db-evcount .bar{width:90px;height:6px;background:#e9d9b8;border-radius:4px;overflow:hidden}
-  .db-evcount .bar i{display:block;height:100%;background:#b9791a;width:0%;transition:width .5s}
-  .db-alerts-h { font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:#888; margin-bottom:6px; font-weight:700; }
-  .db-alert { font-size:10.5px; padding:6px 8px; border-radius:6px; margin-bottom:5px; border-left:3px solid; background:#f8f8f5; }
-  .db-alert.ok{border-color:#0f6e56;color:#0a5040} .db-alert.warn{border-color:#b9791a;color:#7a4e08} .db-alert.alert{border-color:#c0392b;color:#791f1f}
+  /* Dashboard Gemelo Digital UI Mejorado */
+  #dash-mock { background:#ffffff; color:#1a1a1a; border-radius:12px; overflow:hidden; margin-bottom:20px; box-shadow:0 8px 30px rgba(0,0,0,0.3); border: 1px solid #e0e0e0; }
+  #dash-mock .db-top { background: linear-gradient(135deg, #0f6e56, #0a4f3d); color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
+  #dash-mock .db-top b { font-size:14px; font-weight: 700;}
+  #dash-mock .db-top span { font-size:10px; opacity:.9; font-weight: 600; background: rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 4px;}
+  #dash-mock .db-body { padding:16px; }
+  .db-kpis { display:flex; gap:10px; margin-bottom:14px; }
+  .db-kpi { flex:1; background:#f5f7f9; border-radius:8px; padding:10px; text-align:center; border: 1px solid #eaedf1; }
+  .db-kpi .v { font-size:18px; font-weight:800; color:#0f6e56; }
+  .db-kpi .l { font-size:10px; color:#5c6b7a; margin-top:4px; font-weight: 600; text-transform: uppercase;}
+  
+  .db-evcount { background:#fff8e1; border: 1px solid #ffecb3; border-radius:8px; padding:10px 14px; margin-bottom:14px; }
+  .db-evcount-top { display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px; }
+  .db-evcount-top span { font-size: 11px; color:#8d6e00; font-weight: 700; text-transform: uppercase;}
+  .db-evcount-top b { font-size: 13px; color: #ff8f00; }
+  .db-evcount .bar { width:100%; height:8px; background:#ffecb3; border-radius:4px; overflow:hidden; }
+  .db-evcount .bar i { display:block; height:100%; background: linear-gradient(90deg, #ffca28, #ff8f00); width:0%; transition:width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+  
+  .db-alerts-h { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5c6b7a; margin-bottom:8px; font-weight:800; }
+  #dash-alerts { display: flex; flex-direction: column; gap: 6px; }
+  .db-alert { font-size:11.5px; padding:8px 12px; border-radius:6px; border-left:4px solid; background:#f8f9fa; font-weight: 500;}
+  .db-alert.ok { border-color:#00e676; color:#004d40; background: #e8f5e9; } 
+  .db-alert.warn { border-color:#ffca28; color:#f57f17; background: #fffde7; } 
+  .db-alert.alert { border-color:#ff5252; color:#b71c1c; background: #ffebee; }
 
-  .spec-card { background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 10px; padding: 15px; margin-bottom: 13px; }
-  .spec-card h3 { font-size: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 7px; text-transform: uppercase; letter-spacing: 0.5px;}
-  .spec-card h3 .icon { width: 11px; height: 11px; border-radius: 3px; }
+  .spec-card { background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  .spec-card h3 { font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #fff;}
+  .spec-card h3 .icon { width: 14px; height: 14px; border-radius: 4px; }
   .spec-list { list-style: none; }
-  .spec-list li { font-size: 11px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; }
+  .spec-list li { font-size: 12px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; }
   .spec-list li:last-child { border-bottom: none; }
   .spec-list li span.k { color: var(--mut); }
-  .spec-list li span.v { color: var(--txt); font-family: monospace; font-weight: 600; text-align: right; max-width: 58%; }
-  .tech-note { background: rgba(65,201,154,0.1); border-left: 3px solid var(--accent); padding: 9px 13px; font-size: 10.5px; color: #9fe6cd; border-radius: 0 6px 6px 0; margin-top: 9px; line-height: 1.5; }
+  .spec-list li span.v { color: var(--txt); font-family: monospace; font-weight: 600; text-align: right; max-width: 60%; }
+  .tech-note { background: rgba(0,230,118,0.1); border-left: 3px solid var(--accent); padding: 10px 14px; font-size: 11.5px; color: #b9f6ca; border-radius: 0 8px 8px 0; margin-top: 12px; line-height: 1.5; font-style: italic;}
 
-  @media(max-width: 1050px){
+  @media(max-width: 1100px){
     body { flex-direction: column; }
-    #tech-panel { width: 100%; height: 42vh; border-left: none; border-top: 1px solid var(--line); }
-    #story-box { bottom: 12px; width: 95%; padding: 14px; }
-    #steps-panel{ width:220px; }
+    #tech-panel { width: 100%; height: 45vh; border-left: none; border-top: 1px solid var(--line); }
+    #story-box { bottom: 15px; width: 95%; padding: 16px; }
+    #steps-panel{ width:260px; top: 75px;}
   }
 </style>
 </head>
@@ -87,22 +96,22 @@
 <div id="sim-container">
   <div id="hdr">
     <div>
-      <h1>Sistema Dinámico de Trazabilidad e Inventario</h1>
-      <p>PASO A PASO — CENTRO DE DISTRIBUCIÓN NESTLÉ</p>
+      <h1>Trazabilidad Total e Inventario</h1>
+      <p>ARQUITECTURA HÍBRIDA (PROPUESTA FINAL)</p>
     </div>
     <div id="wms-status">
-      <span>Estado WMS (SAP)</span>
-      <div id="wms-text">EN ESPERA...</div>
+      <span>Estado SAP / WMS</span>
+      <div id="wms-text" style="color: var(--mut);">SINCRONIZADO</div>
     </div>
   </div>
 
   <div id="steps-panel">
-    <div class="step-item" id="sp1"><div class="n">1</div><div class="tx"><b>Portal RFID + tag reutilizable</b><span>Registra entrada y salida al cruzar</span></div></div>
-    <div class="step-item" id="sp2"><div class="n">2</div><div class="tx"><b>Montacargas + canastilla</b><span>El método real de Nestlé, sin cambios</span></div></div>
-    <div class="step-item" id="sp3"><div class="n">3</div><div class="tx"><b>Sensor ToF en el rack</b><span>Confirma si la posición está ocupada</span></div></div>
-    <div class="step-item" id="sp4"><div class="n">4</div><div class="tx"><b>Verificación de cadena de frío</b><span>El dron confirma la temperatura al pasar</span></div></div>
-    <div class="step-item" id="sp5"><div class="n">5</div><div class="tx"><b>Enjambre de drones (auditoría)</b><span>Vuela bajo demanda: cámara + sensor de rango</span></div></div>
-    <div class="step-item" id="sp6"><div class="n">6</div><div class="tx"><b>Torre de control + App</b><span>Todo integrado a SAP, con alertas en vivo</span></div></div>
+    <div class="step-item" id="sp1"><div class="n">1</div><div class="tx"><b>Control de flujo dinámico</b><span>Portales RFID + Tags Reutilizables</span></div></div>
+    <div class="step-item" id="sp2"><div class="n">2</div><div class="tx"><b>Sensores ToF</b><span>Ubicación y ocupación en estanterías</span></div></div>
+    <div class="step-item" id="sp3"><div class="n">3</div><div class="tx"><b>Cadena de frío</b><span>Monitoreo de temperatura integrado</span></div></div>
+    <div class="step-item" id="sp4"><div class="n">4</div><div class="tx"><b>Enjambre "Charlie"</b><span>Auditoría on-demand (LiDAR + RGB)</span></div></div>
+    <div class="step-item" id="sp5"><div class="n">5</div><div class="tx"><b>Torre de Control</b><span>Dashboard y Gemelo Digital</span></div></div>
+    <div class="step-item" id="sp6"><div class="n">6</div><div class="tx"><b>Integración SAP WMS</b><span>Cruce de datos lógicos y físicos</span></div></div>
   </div>
 
   <div id="canvas-container"></div>
@@ -110,91 +119,63 @@
   <div id="story-box">
     <div class="story-head">
       <div class="step-tag" id="step-tag" style="background: var(--purple); color: #fff;">INICIO</div>
-      <div class="step-counter" id="step-counter">Paso 1 de 13</div>
+      <div class="step-counter" id="step-counter">Paso 1 de 14</div>
     </div>
-    <h2 id="story-title">Bienvenido al recorrido paso a paso</h2>
-    <p id="story-desc">Usa "Siguiente" para avanzar por cada parte del proceso a tu propio ritmo. Puedes retroceder cuando quieras para releer un paso.</p>
+    <h2 id="story-title">Cargando Simulación...</h2>
+    <p id="story-desc">Por favor espera.</p>
     <div id="story-controls">
       <button id="btn-prev" onclick="prevStep()" disabled>◀ Anterior</button>
-      <button id="btn-restart" onclick="restart()">Reiniciar</button>
-      <button id="btn-next" class="primary" onclick="nextStep()">Siguiente ▶</button>
+      <button id="btn-restart" onclick="restart()">Reiniciar Ciclo</button>
+      <button id="btn-next" class="primary" onclick="nextStep()">Siguiente Paso ▶</button>
     </div>
   </div>
 </div>
 
 <div id="tech-panel">
   <div class="tech-header">
-    <h2>Ficha técnica y aplicación</h2>
-    <p>Cómo trabaja cada componente, y la app que lo muestra</p>
+    <h2>Gemelo Digital & Ficha Técnica</h2>
+    <p>Monitoreo en tiempo real según Propuesta Innolab</p>
   </div>
   <div class="tech-content">
 
     <div id="dash-mock">
-      <div class="db-top"><b>Nestlé · Torre de Control</b><span>CD Guayaquil</span></div>
+      <div class="db-top"><b>Torre de Control (Gemelo Digital)</b><span>ZONAS A-C</span></div>
       <div class="db-body">
         <div class="db-kpis">
           <div class="db-kpi"><div class="v" id="dash-acc">99.4%</div><div class="l">Exactitud</div></div>
-          <div class="db-kpi"><div class="v" id="dash-scan">0</div><div class="l">Eventos hoy</div></div>
-          <div class="db-kpi"><div class="v" id="dash-temp">-4.6°C</div><div class="l">Zona fría</div></div>
+          <div class="db-kpi"><div class="v" id="dash-scan">0</div><div class="l">Movimientos</div></div>
+          <div class="db-kpi"><div class="v" id="dash-temp">-4.6°C</div><div class="l">Zona Fría OK</div></div>
         </div>
         <div class="db-evcount">
-          <span>Contador de eventos <b id="dash-evtxt">0/15</b></span>
+          <div class="db-evcount-top">
+            <span>Acumulador para Despegue</span>
+            <b id="dash-evtxt">0/15</b>
+          </div>
           <div class="bar"><i id="dash-evbar"></i></div>
         </div>
-        <div class="db-alerts-h">Alertas de la app (en vivo)</div>
-        <div id="dash-alerts"><div class="db-alert ok">Sistema iniciado. Esperando el primer evento.</div></div>
+        <div class="db-alerts-h">Registro de Eventos SAP</div>
+        <div id="dash-alerts"><div class="db-alert ok">Sistema iniciado. Mapeo ToF activo.</div></div>
       </div>
     </div>
 
     <div class="spec-card">
-      <h3 style="color: var(--purple);"><div class="icon" style="background: var(--purple);"></div> 1. Portal RFID + Tag reutilizable</h3>
-      <ul class="spec-list">
-        <li><span class="k">Función</span><span class="v">Control de flujo / tránsito</span></li>
-        <li><span class="k">Hardware</span><span class="v">Arco con antenas UHF</span></li>
-        <li><span class="k">Tags</span><span class="v">Reutilizables — no 24.000</span></li>
-        <li><span class="k">Costo de reposición</span><span class="v" style="color: var(--accent);">≈ $0 / año</span></li>
-      </ul>
-      <div class="tech-note" style="border-color:var(--purple); color:#cabfff; background:rgba(155,140,255,.1);">El operario coloca el tag al ingresar el pallet y lo retira al despacharlo. El mismo tag físico sirve para cientos de pallets al año.</div>
+      <h3 style="color: var(--purple);"><div class="icon" style="background: var(--purple);"></div> Comp 1: Portales y Tags Reutilizables</h3>
+      <div class="tech-note" style="border-color:var(--purple); color:#d1c4e9; background:rgba(179, 136, 255, 0.1);">Evita etiquetar 24.000 posiciones. El operario engancha el tag tipo tarjeta al ingresar y lo retira al despachar. Gasto en consumibles RFID: $0.</div>
     </div>
 
     <div class="spec-card">
-      <h3 style="color: var(--red);"><div class="icon" style="background: var(--red);"></div> 2. Montacargas + Canastilla</h3>
-      <ul class="spec-list">
-        <li><span class="k">Función</span><span class="v">Transporte y elevación del pallet</span></li>
-        <li><span class="k">Cambio de proceso</span><span class="v" style="color:var(--accent)">Ninguno</span></li>
-        <li><span class="k">Operador</span><span class="v">El mismo personal actual</span></li>
-      </ul>
-      <div class="tech-note" style="border-color:var(--red); color:#ffb0a8; background:rgba(239,95,82,.1);">Esta propuesta no reemplaza el método físico que Nestlé ya usa (montacargas y canastilla). Se añaden sensores y el dron encima de ese proceso, no en lugar de él.</div>
+      <h3 style="color: var(--amber);"><div class="icon" style="background: var(--amber);"></div> Comp 2: Sensores ToF (Time-of-Flight)</h3>
+      <div class="tech-note" style="border-color:var(--amber); color:#ffe082; background:rgba(255, 202, 40, 0.1);">Detectan obstrucción física en zonas de alta rotación. Si alguien retira un pallet sin orden, dispara alerta instantánea sin esperar conteo manual.</div>
     </div>
 
     <div class="spec-card">
-      <h3 style="color: var(--amber);"><div class="icon" style="background: var(--amber);"></div> 3. Sensores ToF (estanterías)</h3>
+      <h3 style="color: var(--accent2);"><div class="icon" style="background: var(--accent2);"></div> Comp 4: Enjambre Charlie (Drones)</h3>
       <ul class="spec-list">
-        <li><span class="k">Tecnología</span><span class="v">Láser Time-of-Flight</span></li>
-        <li><span class="k">Propósito</span><span class="v">Ocupación física en tiempo real</span></li>
-        <li><span class="k">Comunicación</span><span class="v">LoRaWAN / IoT WiFi</span></li>
+        <li><span class="k">Sensor LiDAR</span><span class="v" style="color:var(--accent)">Ubicación exacta (Rack/Nivel)</span></li>
+        <li><span class="k">Cámara RGB</span><span class="v">Lee código barras SSCC impreso</span></li>
+        <li><span class="k">Activación</span><span class="v">Solo al sumar 15 eventos o alertas</span></li>
       </ul>
-      <div class="tech-note" style="border-color:var(--amber); color:#f5cd8a; background:rgba(240,168,52,.1);">Alertan al instante si se retira un pallet sin orden autorizada, sin necesidad de RFID en el producto.</div>
-    </div>
-
-    <div class="spec-card">
-      <h3 style="color: var(--accent2);"><div class="icon" style="background: var(--accent2);"></div> 4–5. Dron Charlie (frío + auditoría)</h3>
-      <ul class="spec-list">
-        <li><span class="k">Sensor de rango</span><span class="v">LiDAR — ubicación exacta</span></li>
-        <li><span class="k">Cámara</span><span class="v">RGB — lee código de barras</span></li>
-        <li><span class="k">Despliegue</span><span class="v">Bajo demanda (no constante)</span></li>
-      </ul>
-      <div class="tech-note" style="border-color:var(--accent2); color:#a9d5ff; background:rgba(79,172,254,.1);">El dron no lee RFID: eso lo hacen los portales. Su cámara lee el código impreso como respaldo universal.</div>
-    </div>
-
-    <div class="spec-card">
-      <h3 style="color: var(--accent);"><div class="icon" style="background: var(--accent);"></div> 6. Torre de Control + App</h3>
-      <ul class="spec-list">
-        <li><span class="k">Formato</span><span class="v">Dashboard web (no app nativa)</span></li>
-        <li><span class="k">Integración</span><span class="v">SAP / WMS en tiempo real</span></li>
-        <li><span class="k">Alertas</span><span class="v">Automáticas por evento</span></li>
-      </ul>
-      <div class="tech-note" style="border-color:var(--accent); color:#9fe6cd; background:rgba(65,201,154,.1);">La app de arriba se actualiza con lo mismo que ves en la escena — es la misma información, en dos formas.</div>
+      <div class="tech-note" style="border-color:var(--accent2); color:#80d8ff; background:rgba(0, 176, 255, 0.1);">No patrullan sin parar. Vuelan directo al hueco reportado ahorrando 80% de batería.</div>
     </div>
 
   </div>
@@ -204,474 +185,347 @@
 <script>
 // ================= THREE.JS SETUP =================
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#0d1220');
-scene.fog = new THREE.FogExp2('#0d1220', 0.013);
-const camera = new THREE.PerspectiveCamera(48, document.getElementById('sim-container').clientWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({antialias: true});
+scene.background = new THREE.Color('#0b111a');
+scene.fog = new THREE.FogExp2('#0b111a', 0.012);
+const camera = new THREE.PerspectiveCamera(50, document.getElementById('sim-container').clientWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({antialias: true, powerPreference: "high-performance"});
 renderer.setSize(document.getElementById('sim-container').clientWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-dir.position.set(20, 30, 20); dir.castShadow = true;
+scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+const dir = new THREE.DirectionalLight(0xffffff, 0.9);
+dir.position.set(25, 40, 20); dir.castShadow = true;
+dir.shadow.camera.top = 20; dir.shadow.camera.bottom = -20;
+dir.shadow.camera.left = -20; dir.shadow.camera.right = 20;
 scene.add(dir);
 
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), new THREE.MeshStandardMaterial({color: '#16203a'}));
+const floorMat = new THREE.MeshStandardMaterial({color: '#121a28', roughness: 0.8, metalness: 0.2});
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(150, 150), floorMat);
 floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
-for(let x=-12;x<=12;x+=6){
-  const l = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 60), new THREE.MeshBasicMaterial({color:'#f0a83422'}));
-  l.rotation.x = -Math.PI/2; l.position.set(x, 0.01, -10); scene.add(l);
+// Marcas en el piso
+for(let x=-15;x<=15;x+=7.5){
+  const l = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 80), new THREE.MeshBasicMaterial({color:'#ffca28', transparent:true, opacity:0.15}));
+  l.rotation.x = -Math.PI/2; l.position.set(x, 0.02, 0); scene.add(l);
 }
 
 // ================= TEXTURAS =================
 function createBarcode(codeText) {
   const c = document.createElement('canvas'); c.width = 128; c.height = 64; const x = c.getContext('2d');
   x.fillStyle='#fff'; x.fillRect(0,0,128,64); x.fillStyle='#000';
-  for (let i=10; i<118; i+=Math.floor(Math.random()*4)+2) x.fillRect(i, 8, 2, 40);
-  x.font='bold 11px Arial'; x.fillText(codeText||'SSCC (00)', 18, 58); return new THREE.CanvasTexture(c);
+  for (let i=10; i<118; i+=Math.floor(Math.random()*5)+2) x.fillRect(i, 8, 2, 40);
+  x.font='bold 12px sans-serif'; x.fillText(codeText||'SSCC (00)', 18, 58); return new THREE.CanvasTexture(c);
 }
-const ssccTex = createBarcode('SSCC (00)');
 function createRFID() {
   const c = document.createElement('canvas'); c.width = 64; c.height = 64; const x = c.getContext('2d');
-  x.fillStyle='#fff'; x.fillRect(0,0,64,64); x.fillStyle='#9b8cff'; x.fillRect(16,16,32,32);
-  x.strokeStyle='#5a4bb0'; x.lineWidth=3; x.strokeRect(16,16,32,32);
+  x.fillStyle='#fff'; x.fillRect(0,0,64,64); x.fillStyle='#b388ff'; x.fillRect(16,16,32,32);
+  x.strokeStyle='#651fff'; x.lineWidth=4; x.strokeRect(16,16,32,32);
   return new THREE.CanvasTexture(c);
 }
-const rfidTex = createRFID();
+const ssccTex = createBarcode('SSCC (00)'); const rfidTex = createRFID();
 
-// ================= PORTALES =================
+// ================= PORTALES RFID =================
 function createPortal(colorBeam) {
   const p = new THREE.Group();
-  const pMat = new THREE.MeshStandardMaterial({color: '#1a2538'});
-  const pL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 0.5), pMat); pL.position.set(-3, 3, 0);
-  const pR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 0.5), pMat); pR.position.set(3, 3, 0);
-  const pT = new THREE.Mesh(new THREE.BoxGeometry(6.5, 0.5, 0.5), pMat); pT.position.set(0, 6, 0);
-  const pBeam = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.MeshBasicMaterial({color: colorBeam, transparent: true, opacity: 0, side: THREE.DoubleSide}));
-  pBeam.position.set(0, 3, 0);
-  p.add(pL, pR, pT, pBeam);
-  p.beam = pBeam;
-  return p;
+  const pMat = new THREE.MeshStandardMaterial({color: '#1a2538', metalness:0.5, roughness:0.4});
+  const pL = new THREE.Mesh(new THREE.BoxGeometry(0.6, 6.5, 0.6), pMat); pL.position.set(-3.5, 3.25, 0); pL.castShadow=true;
+  const pR = new THREE.Mesh(new THREE.BoxGeometry(0.6, 6.5, 0.6), pMat); pR.position.set(3.5, 3.25, 0); pR.castShadow=true;
+  const pT = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.6, 0.6), pMat); pT.position.set(0, 6.8, 0); pT.castShadow=true;
+  const pBeam = new THREE.Mesh(new THREE.PlaneGeometry(6.5, 6.5), new THREE.MeshBasicMaterial({color: colorBeam, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending}));
+  pBeam.position.set(0, 3.25, 0);
+  p.add(pL, pR, pT, pBeam); p.beam = pBeam; return p;
 }
-const portalIn = createPortal('#9b8cff'); portalIn.position.set(-15, 0, 15); scene.add(portalIn);
-const portalOut = createPortal('#ef5f52'); portalOut.position.set(15, 0, 15); scene.add(portalOut);
-const tMat1 = new THREE.MeshBasicMaterial({color:'#9b8cff'}); const t1 = new THREE.Mesh(new THREE.PlaneGeometry(6,2), tMat1); t1.rotation.x=-Math.PI/2; t1.position.set(-15,0.01,18); scene.add(t1);
-const tMat2 = new THREE.MeshBasicMaterial({color:'#ef5f52'}); const t2 = new THREE.Mesh(new THREE.PlaneGeometry(6,2), tMat2); t2.rotation.x=-Math.PI/2; t2.position.set(15,0.01,18); scene.add(t2);
+const portalIn = createPortal('#b388ff'); portalIn.position.set(-18, 0, 15); scene.add(portalIn);
+const portalOut = createPortal('#ff5252'); portalOut.position.set(18, 0, 15); scene.add(portalOut);
+const tMat1 = new THREE.MeshBasicMaterial({color:'#b388ff'}); const t1 = new THREE.Mesh(new THREE.PlaneGeometry(7,2), tMat1); t1.rotation.x=-Math.PI/2; t1.position.set(-18,0.01,18); scene.add(t1);
+const tMat2 = new THREE.MeshBasicMaterial({color:'#ff5252'}); const t2 = new THREE.Mesh(new THREE.PlaneGeometry(7,2), tMat2); t2.rotation.x=-Math.PI/2; t2.position.set(18,0.01,18); scene.add(t2);
 
-// ================= RACKS (rack 2 = zona fría) =================
-const racks = [];
-const rMat = new THREE.MeshStandardMaterial({color: '#2980b9'});
-const bMat = new THREE.MeshStandardMaterial({color: '#c0392b'});
-const boxMat = new THREE.MeshStandardMaterial({color: '#caa892'});
-const boxColdMat = new THREE.MeshStandardMaterial({color: '#9fb8cc'});
+// ================= RACKS Y PALLETS =================
+const rMat = new THREE.MeshStandardMaterial({color: '#1565c0', metalness:0.4});
+const bMat = new THREE.MeshStandardMaterial({color: '#e65100', roughness:0.7});
+const boxMat = new THREE.MeshStandardMaterial({color: '#d7ccc8'});
+const boxColdMat = new THREE.MeshStandardMaterial({color: '#bbdefb'});
 
 function createBox(hasRfid, cold, codeText) {
   const bg = new THREE.Group();
-  const box = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.2, 1), cold?boxColdMat:boxMat); box.position.y = 0.6; box.castShadow = true; bg.add(box);
-  const ssccLabel = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.3), new THREE.MeshBasicMaterial({map: codeText?createBarcode(codeText):ssccTex}));
-  ssccLabel.position.set(0, 0.6, 0.51); bg.add(ssccLabel);
-  bg.ssccLabel = ssccLabel;
+  const palletBase = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.15, 1.2), new THREE.MeshStandardMaterial({color:'#5d4037'}));
+  palletBase.position.y = 0.075; bg.add(palletBase);
+  const box = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.1, 1.1), cold?boxColdMat:boxMat); box.position.y = 0.7; box.castShadow = true; bg.add(box);
+  const ssccLabel = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.35), new THREE.MeshBasicMaterial({map: codeText?createBarcode(codeText):ssccTex}));
+  ssccLabel.position.set(0, 0.7, 0.56); bg.add(ssccLabel); bg.ssccLabel = ssccLabel;
   if(hasRfid) {
-    const rfidLabel = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.2), new THREE.MeshBasicMaterial({map: rfidTex}));
-    rfidLabel.position.set(0.4, 0.9, 0.51); rfidLabel.visible=false; bg.add(rfidLabel);
-    bg.rfidLabel = rfidLabel;
+    const rfidLabel = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 0.25), new THREE.MeshBasicMaterial({map: rfidTex}));
+    rfidLabel.position.set(0.45, 1.0, 0.56); rfidLabel.visible=false; bg.add(rfidLabel); bg.rfidLabel = rfidLabel;
   }
   return bg;
 }
 
-const materialNames = ['Wafer Amor','Galleta María','Chocolate Manicho','Nescafé 50g','Maggi Caldo','Ricacao 400g'];
-function randMat(){return materialNames[Math.floor(Math.random()*materialNames.length)];}
-
+const racks = [];
 for(let r=0; r<3; r++) {
   const rack = new THREE.Group();
   const isCold = (r===2);
   rack.tofByLevel = [];
   for(let i=0; i<6; i++) {
-    const post = new THREE.Mesh(new THREE.BoxGeometry(0.2, 5, 0.2), rMat);
-    post.position.set(i*3 - 7.5, 2.5, 0); rack.add(post);
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.25, 5.5, 0.25), rMat); post.position.set(i*3.5 - 8.75, 2.75, 0); rack.add(post); post.castShadow=true;
   }
   for(let i=1; i<=2; i++) {
-    const beam = new THREE.Mesh(new THREE.BoxGeometry(15.2, 0.2, 1), bMat);
-    beam.position.set(0, i*2, 0); rack.add(beam);
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(17.8, 0.25, 1.2), bMat); beam.position.set(0, i*2.2, 0); rack.add(beam); beam.castShadow=true;
   }
   for(let lvl=0; lvl<2; lvl++) {
     for(let col=0; col<5; col++) {
-      if(r===1 && col===2 && lvl===1) continue; // hueco: pallet de anomalía
-      if(r===0 && col===1 && lvl===1) continue; // hueco: destino del ingreso (nivel alto -> requiere canastilla)
+      if(r===1 && col===2 && lvl===1) continue; // Hueco para anomalía
+      if(r===0 && col===1 && lvl===1) continue; // Hueco para ingreso
       const staticBox = createBox(false, isCold, 'BC-'+String.fromCharCode(65+r)+col+lvl);
-      staticBox.position.set(col*3 - 6, lvl*2, 0);
+      staticBox.position.set(col*3.5 - 7, lvl*2.2 + 0.15, 0);
       rack.add(staticBox);
     }
-    const tofBeam = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 15), new THREE.MeshBasicMaterial({color: isCold?'#3ec6e0':'#4facfe', transparent: true, opacity: 0.3}));
-    tofBeam.rotation.z = Math.PI/2; tofBeam.position.set(0, lvl*2 + 0.3, 0.5);
-    rack.add(tofBeam);
-    rack.tofByLevel[lvl] = tofBeam;
+    // Rayo Láser ToF
+    const tofBeam = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 17.5), new THREE.MeshBasicMaterial({color: isCold?'#00e5ff':'#00b0ff', transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending}));
+    tofBeam.rotation.z = Math.PI/2; tofBeam.position.set(0, lvl*2.2 + 0.5, 0.6); rack.add(tofBeam); rack.tofByLevel[lvl] = tofBeam;
   }
-  rack.position.set(0, 0, r*-6 - 2);
-  scene.add(rack);
-  rack.isCold = isCold;
-  racks.push(rack);
+  rack.position.set(0, 0, r*-7.5 - 3); scene.add(rack); rack.isCold = isCold; racks.push(rack);
 }
+
+// Letrero Zona Fría
 (function(){
-  const c=document.createElement('canvas');c.width=256;c.height=64;const x=c.getContext('2d');
-  x.fillStyle='#3ec6e0';x.fillRect(0,0,256,64);x.fillStyle='#04222b';x.font='bold 30px Arial';x.textAlign='center';x.fillText('ZONA FRÍA',128,42);
-  const tex=new THREE.CanvasTexture(c);
-  const sign=new THREE.Mesh(new THREE.PlaneGeometry(4,1),new THREE.MeshBasicMaterial({map:tex}));
-  sign.position.set(0,5.3,-14);scene.add(sign);
+  const c=document.createElement('canvas');c.width=300;c.height=80;const x=c.getContext('2d');
+  x.fillStyle='#006064';x.fillRect(0,0,300,80); x.strokeStyle='#00e5ff'; x.lineWidth=4; x.strokeRect(2,2,296,76);
+  x.fillStyle='#00e5ff';x.font='bold 34px sans-serif';x.textAlign='center';x.fillText('❄ ZONA FRÍA',150,52);
+  const tex=new THREE.CanvasTexture(c); const sign=new THREE.Mesh(new THREE.PlaneGeometry(5,1.33),new THREE.MeshBasicMaterial({map:tex}));
+  sign.position.set(0,6,-16.5); scene.add(sign);
 })();
 
-// ================= MONTACARGAS + CANASTILLA =================
+// ================= MONTACARGAS FÍSICA MEJORADA =================
 function createForklift(color){
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.3,1.0,1.9), new THREE.MeshStandardMaterial({color, metalness:.3, roughness:.6}));
-  body.position.y=0.65; body.castShadow=true; g.add(body);
-  const cab = new THREE.Mesh(new THREE.BoxGeometry(0.9,0.8,0.85), new THREE.MeshStandardMaterial({color:'#d68910'}));
-  cab.position.set(0,1.35,-0.35); g.add(cab);
-  // mástil (fijo) + canastilla (sube y baja sobre el mástil)
-  const mast = new THREE.Mesh(new THREE.BoxGeometry(0.16,4.4,0.16), new THREE.MeshStandardMaterial({color:'#2c3e50'}));
-  mast.position.set(-0.5,2.2,0.9); g.add(mast);
-  const mast2 = new THREE.Mesh(new THREE.BoxGeometry(0.16,4.4,0.16), new THREE.MeshStandardMaterial({color:'#2c3e50'}));
-  mast2.position.set(0.5,2.2,0.9); g.add(mast2);
-  const carriage = new THREE.Mesh(new THREE.BoxGeometry(1.3,0.12,0.9), new THREE.MeshStandardMaterial({color:'#555'}));
-  carriage.position.set(0,0.62,0.9); g.add(carriage); g._carriage = carriage;
-  const light = new THREE.Mesh(new THREE.SphereGeometry(0.13,10,10), new THREE.MeshBasicMaterial({color:'#ffcf3f'}));
-  light.position.set(0,1.8,-0.35); g.add(light); g._light=light;
-  g._liftLevel = 0; // 0 = suelo, 1 = nivel alto (canastilla arriba)
-  return g;
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.4,1.1,2.1), new THREE.MeshStandardMaterial({color, metalness:0.2, roughness:0.8}));
+  body.position.y=0.7; body.castShadow=true; g.add(body);
+  const cab = new THREE.Mesh(new THREE.BoxGeometry(1.0,0.9,0.9), new THREE.MeshStandardMaterial({color:'#212121'}));
+  cab.position.set(0,1.5,-0.4); g.add(cab); cab.castShadow=true;
+  const mast = new THREE.Mesh(new THREE.BoxGeometry(0.2,4.8,0.2), new THREE.MeshStandardMaterial({color:'#37474f'}));
+  mast.position.set(-0.55,2.4,1.1); g.add(mast);
+  const mast2 = new THREE.Mesh(new THREE.BoxGeometry(0.2,4.8,0.2), new THREE.MeshStandardMaterial({color:'#37474f'}));
+  mast2.position.set(0.55,2.4,1.1); g.add(mast2);
+  const carriage = new THREE.Mesh(new THREE.BoxGeometry(1.4,0.15,1.0), new THREE.MeshStandardMaterial({color:'#424242'}));
+  carriage.position.set(0,0.7,1.1); g.add(carriage); g._carriage = carriage;
+  const forks = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.05, 1.2), new THREE.MeshStandardMaterial({color:'#212121'}));
+  forks.position.set(0, 0.05, 0.6); carriage.add(forks); // Forks attached to carriage
+  const light = new THREE.Mesh(new THREE.SphereGeometry(0.15,12,12), new THREE.MeshBasicMaterial({color:'#ffca28'}));
+  light.position.set(0,2.0,-0.4); g.add(light); g._light=light;
+  g._liftLevel = 0; return g;
 }
-const fkA = createForklift('#f0a834'); fkA.position.set(-15,0,25); scene.add(fkA);
-const fkB = createForklift('#4facfe'); fkB.position.set(6,0,-11); scene.add(fkB);
+const fkA = createForklift('#f57f17'); fkA.position.set(-18,0,26); scene.add(fkA);
+const fkB = createForklift('#0277bd'); fkB.position.set(7.5,0,-12); scene.add(fkB);
 
-// ================= PALLETS =================
+// ================= PALLETS DINÁMICOS =================
 const inCode = 'BC-IN-'+Math.floor(Math.random()*900+100);
 const palletIn = createBox(true, false, inCode);
-palletIn.position.set(-15, 0.62, 25); // sobre la canastilla del montacargas A
-scene.add(palletIn);
+palletIn.position.set(-18, 0.7, 27.1); scene.add(palletIn);
 palletIn._carrier = fkA; palletIn._placed = false;
 
 const outCode = 'BC-OUT-'+Math.floor(Math.random()*900+100);
 const palletOut = createBox(true, false, outCode);
-palletOut.position.set(6, 0.62, -8);
-palletOut.rfidLabel.visible = true; // ya llevaba tag de un ciclo anterior
-scene.add(palletOut);
+palletOut.position.set(7.5, 0.15, -10.5); palletOut.rfidLabel.visible = true; scene.add(palletOut);
 palletOut._carrier = null; palletOut._placed = true;
 
-const dynamicPalletAnomaly = createBox(false, false, 'BC-ANM-'+Math.floor(Math.random()*900+100));
-dynamicPalletAnomaly.position.set(0, 2, -8);
-scene.add(dynamicPalletAnomaly);
+const dynamicPalletAnomaly = createBox(false, false, 'BC-ANM-000');
+dynamicPalletAnomaly.position.set(0, 2.35, -10.5); scene.add(dynamicPalletAnomaly);
 
-// ================= OPERARIO + STOCK DE TAGS =================
-function createOperator(){
-  const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.28,0.9,10), new THREE.MeshStandardMaterial({color:'#2c3e50'}));
-  body.position.y=0.55; g.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.18,12,12), new THREE.MeshStandardMaterial({color:'#e0b090'}));
-  head.position.y=1.1; g.add(head);
-  const vest = new THREE.Mesh(new THREE.CylinderGeometry(0.26,0.30,0.5,10), new THREE.MeshStandardMaterial({color:'#f0a834'}));
-  vest.position.y=0.75; g.add(vest);
-  return g;
-}
-const operator = createOperator();
-operator.position.set(-17.5, 0, 16.5);
-scene.add(operator);
+// Operario y Stock
+const operator = new THREE.Group();
+const opBody = new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.3,1.0,12), new THREE.MeshStandardMaterial({color:'#37474f'})); opBody.position.y=0.6; operator.add(opBody);
+const opHead = new THREE.Mesh(new THREE.SphereGeometry(0.2,16,16), new THREE.MeshStandardMaterial({color:'#ffccbc'})); opHead.position.y=1.25; operator.add(opHead);
+const opVest = new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.32,0.55,12), new THREE.MeshStandardMaterial({color:'#ffeb3b'})); opVest.position.y=0.8; operator.add(opVest);
+operator.position.set(-21, 0, 16.5); scene.add(operator);
 
-// caja de stock de tags reutilizables
-const stockBin = new THREE.Mesh(new THREE.BoxGeometry(0.9,0.5,0.6), new THREE.MeshStandardMaterial({color:'#333'}));
-stockBin.position.set(-19.5, 0.25, 15); scene.add(stockBin);
-[0,1,2].forEach(i=>{
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(0.22,0.22), new THREE.MeshBasicMaterial({map:rfidTex}));
-  m.position.set(-19.7+i*0.2, 0.55, 15); m.rotation.x=-Math.PI/2.3; scene.add(m);
-});
-(function(){
-  const c=document.createElement('canvas');c.width=220;c.height=48;const x=c.getContext('2d');
-  x.fillStyle='#0d1220';x.fillRect(0,0,220,48);x.fillStyle='#9b8cff';x.font='bold 20px Arial';x.textAlign='center';x.fillText('STOCK DE TAGS',110,32);
-  const tex=new THREE.CanvasTexture(c);
-  const s=new THREE.Mesh(new THREE.PlaneGeometry(3,0.66),new THREE.MeshBasicMaterial({map:tex}));
-  s.position.set(-19.5,1.1,15); scene.add(s);
-})();
+const flyTag = new THREE.Mesh(new THREE.PlaneGeometry(0.35,0.35), new THREE.MeshBasicMaterial({map:rfidTex}));
+flyTag.visible = false; scene.add(flyTag);
 
-// tag "volador" — se ve viajar entre el stock y el pallet
-const flyTag = new THREE.Mesh(new THREE.PlaneGeometry(0.26,0.26), new THREE.MeshBasicMaterial({map:rfidTex}));
-flyTag.visible = false;
-scene.add(flyTag);
-
-// ================= MONTACARGAS DE CONTEXTO (ambiente) =================
-function createContextForklift(color){
-  const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.2,0.9,1.7), new THREE.MeshStandardMaterial({color, metalness:.3, roughness:.6}));
-  body.position.y=0.6; body.castShadow=true; g.add(body);
-  const cab = new THREE.Mesh(new THREE.BoxGeometry(0.8,0.7,0.75), new THREE.MeshStandardMaterial({color:'#d68910'}));
-  cab.position.set(0,1.2,-0.3); g.add(cab);
-  const light = new THREE.Mesh(new THREE.SphereGeometry(0.11,10,10), new THREE.MeshBasicMaterial({color:'#ffcf3f'}));
-  light.position.set(0,1.6,-0.3); g.add(light); g._light=light;
-  return g;
-}
-const ctxRoutes = [ {color:'#8a8a82', axis:'z', fixed:-9, from:18, to:-18, dur:10, rotY:-Math.PI/2} ];
-const ctxForklifts = ctxRoutes.map(r=>{ const f=createContextForklift(r.color); f.position.set(r.fixed,0,r.from); f.rotation.y=r.rotY; scene.add(f); return {mesh:f,cfg:r}; });
-function animateContext(rawTime){
-  ctxForklifts.forEach(f=>{
-    const c=f.cfg; const cyc=(rawTime%(c.dur*2))/c.dur; const pr=cyc<1?cyc:(2-cyc);
-    f.mesh.position.z = c.from+(c.to-c.from)*pr;
-    f.mesh._light.material.color.set(Math.sin(rawTime*8)>0?'#ffcf3f':'#7a5410');
-  });
-}
-
-// ================= DRON CHARLIE =================
+// ================= ENJAMBRE CHARLIE (DRON) =================
 const drone = new THREE.Group();
-const dBody = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.15, 0.6), new THREE.MeshStandardMaterial({color: '#f0a834'}));
-drone.add(dBody);
-const dCamLight = new THREE.Mesh(new THREE.ConeGeometry(0.5, 2.5, 16), new THREE.MeshBasicMaterial({color: '#ffffff', transparent: true, opacity: 0, blending: THREE.AdditiveBlending}));
-dCamLight.rotation.x = Math.PI/2; dCamLight.position.set(0, -0.2, 1.25); drone.add(dCamLight);
-const dRangeLaser = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 3), new THREE.MeshBasicMaterial({color: '#41c99a', transparent: true, opacity: 0}));
-dRangeLaser.rotation.x = Math.PI/2; dRangeLaser.position.set(0, 0, 1.5); drone.add(dRangeLaser);
-[[0.35,0.35],[-0.35,0.35],[0.35,-0.35],[-0.35,-0.35]].forEach(([x,z])=>{
-  const rot = new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.22,0.03,12), new THREE.MeshBasicMaterial({color:'#2c3e50',transparent:true,opacity:0.5}));
-  rot.position.set(x,0.1,z); drone.add(rot);
-});
-drone.position.set(-18, 0, -8);
-scene.add(drone);
+const dBody = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.2, 0.7), new THREE.MeshStandardMaterial({color: '#ffca28', metalness:0.6})); drone.add(dBody);
+// Cámara térmica/RGB
+const dCamLight = new THREE.Mesh(new THREE.ConeGeometry(0.7, 3.5, 32), new THREE.MeshBasicMaterial({color: '#ffffff', transparent: true, opacity: 0, blending: THREE.AdditiveBlending}));
+dCamLight.rotation.x = Math.PI/2; dCamLight.position.set(0, -0.2, 1.75); drone.add(dCamLight); drone._cam = dCamLight;
+// Sensor LiDAR (Rango) - Requerimiento específico
+const dLidar = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 4), new THREE.MeshBasicMaterial({color: '#00e676', transparent: true, opacity: 0, blending: THREE.AdditiveBlending}));
+dLidar.rotation.x = Math.PI/2; dLidar.position.set(0, 0, 2.0); drone.add(dLidar); drone._lidar = dLidar;
 
-// ================= ESTADO / UI =================
+[[0.4,0.4],[-0.4,0.4],[0.4,-0.4],[-0.4,-0.4]].forEach(([x,z])=>{
+  const rot = new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,0.04,16), new THREE.MeshBasicMaterial({color:'#eceff1',transparent:true,opacity:0.6}));
+  rot.position.set(x,0.15,z); drone.add(rot);
+});
+drone.position.set(-22, 0, -10); scene.add(drone);
+
+// ================= CONTROL UI & ESTADOS =================
 const wmsText = document.getElementById('wms-text');
 const tagStep = document.getElementById('step-tag');
-const tTitle = document.getElementById('story-title');
-const tDesc = document.getElementById('story-desc');
 const stepCounterEl = document.getElementById('step-counter');
 
 function setActiveComponent(n){ for(let i=1;i<=6;i++) document.getElementById('sp'+i).classList.toggle('active', i===n); }
-let eventCounter = 0;
-function bumpEvents(n){ eventCounter=Math.min(15,eventCounter+n); document.getElementById('dash-evtxt').innerText=eventCounter+'/15'; document.getElementById('dash-evbar').style.width=(eventCounter/15*100)+'%'; }
-function pushAlert(msg,type){ const c=document.getElementById('dash-alerts'); const e=document.createElement('div'); e.className='db-alert '+(type||'ok'); e.innerText=msg; c.insertBefore(e,c.firstChild); while(c.children.length>4)c.removeChild(c.lastChild); }
+let evCount = 0;
+function updateEv(n){ 
+  evCount = Math.min(15, n);
+  document.getElementById('dash-evtxt').innerText = evCount+'/15';
+  document.getElementById('dash-evbar').style.width = (evCount/15*100)+'%';
+  document.getElementById('dash-scan').innerText = evCount;
+}
+function pushAlert(msg,type){ const c=document.getElementById('dash-alerts'); const e=document.createElement('div'); e.className='db-alert '+(type||'ok'); e.innerText=msg; c.insertBefore(e,c.firstChild); while(c.children.length>5)c.removeChild(c.lastChild); }
 function setDashAcc(v,color){ const el=document.getElementById('dash-acc'); el.innerText=v; el.style.color=color||'#0f6e56'; }
-function bumpScan(){ const el=document.getElementById('dash-scan'); el.innerText=(parseInt(el.innerText||'0')+1); }
 
-// ================= CÁMARA: sigue al sujeto, zoom en momentos clave =================
+// Sistema de Cámara Fluido
 const camLookAt = new THREE.Vector3(0,3,10);
 let camSubject = new THREE.Vector3(-8,1,14);
-let camBaseOffset = new THREE.Vector3(16,12,18);
-let camCloseUp = false;
-function setCam(subjectVec3, offsetVec3, closeUp){ camSubject.copy(subjectVec3); camBaseOffset.copy(offsetVec3); camCloseUp=closeUp; }
+let camBaseOffset = new THREE.Vector3(18,14,20);
+function setCam(subjectVec3, offsetVec3){ camSubject.copy(subjectVec3); camBaseOffset.copy(offsetVec3); }
 function updateCamera(){
-  const factor = camCloseUp ? 0.42 : 1;
-  const desired = new THREE.Vector3(camSubject.x+camBaseOffset.x*factor, Math.max(1.5,camSubject.y*0.3+camBaseOffset.y*factor), camSubject.z+camBaseOffset.z*factor);
-  camera.position.lerp(desired, camCloseUp?0.055:0.04);
-  camLookAt.lerp(camSubject, camCloseUp?0.09:0.05);
+  const desired = new THREE.Vector3(camSubject.x+camBaseOffset.x, Math.max(2,camSubject.y*0.3+camBaseOffset.y), camSubject.z+camBaseOffset.z);
+  camera.position.lerp(desired, 0.035);
+  camLookAt.lerp(camSubject, 0.045);
   camera.lookAt(camLookAt);
 }
 
-// Puntos del recorrido del dron
-const cyclicStop1 = {x:-6, y:2.6, z:-2, label:'RAC A2 N1', code:'BC-A20', mat:randMat()};
-const coldCheckPoint = {x:0, y:2.6, z:-14, label:'ZONA FRÍA · RAC C', code:'BC-C20', mat:'Nescafé (refrigerado)'};
-const anomalyPoint = {x:0, y:2, z:-4.5, label:'RAC B2 N2', code:'BC-ANM', mat:'—'};
+// Posiciones
+const target = { fkA:{x:-18,z:26,lift:0,rot:0}, fkB:{x:7.5,z:-12,lift:0,rot:0}, drone:null };
+const ingresoSlot = new THREE.Vector3(-3.5, 2.35, -3);
+let flyTagTarget = null;
+let anomalyInterval = null;
 
-// posición del hueco de ingreso (nivel alto, requiere canastilla)
-const ingresoSlot = new THREE.Vector3(-3, 2.6, -2);
-
-// ================= DEFINICIÓN DE LOS 13 PASOS =================
-// Cada paso define: componente activo, textos, etiqueta de fase, cámara, y una función run(justEntered)
-// que fija los valores "objetivo" de las posiciones (los objetos se mueven suavemente hacia ellos cada frame).
-let target = {
-  fkA:{x:-15,z:25,lift:0}, fkB:{x:6,z:-11,lift:0},
-};
-let flyTagTarget = null; // {from:Vector3,to:Vector3,active:bool,t0:performance-based} controlado por paso
-
+// ================= PASOS DE LA SIMULACIÓN (Alineado a Propuesta) =================
 const STEPS = [
-/*1*/ {comp:6, tag:'INICIO', title:'Bienvenido: así funciona el sistema completo', desc:'El Centro de Distribución sigue operando exactamente igual que hoy: montacargas, canastilla y personal. Lo que se añade es una capa de sensores, tags reutilizables y un dron que audita — sin cambiar cómo se mueve el producto.', run(){ setCam(new THREE.Vector3(-4,2,8), new THREE.Vector3(24,17,26), false); wmsText.innerText='SISTEMA EN ESPERA'; wmsText.style.color='var(--mut)'; } },
+/*0*/ {comp:5, tag:'INICIO', title:'1. Arquitectura Híbrida Nestlé', desc:'Bienvenido a la simulación. El objetivo es resolver el control de inventario usando portales RFID para flujo masivo y drones "Charlie" bajo demanda, sin reemplazar el proceso de montacargas actual.', run(){ setCam(new THREE.Vector3(0,2,5), new THREE.Vector3(26,20,30)); wmsText.innerText='SISTEMA INICIADO'; wmsText.style.color='var(--mut)'; } },
 
-/*2*/ {comp:2, tag:'PASO 1 · INGRESO', title:'2. El montacargas trae el pallet desde recepción', desc:'Como ya ocurre hoy, un operario transporta el pallet en su montacargas desde el muelle hacia el interior de la bodega. Nada cambia en esta parte del proceso.', run(){ target.fkA={x:-15,z:16,lift:0}; setCam(fkA.position, new THREE.Vector3(12,9,13), false); wmsText.innerText='MONTACARGAS EN TRÁNSITO'; wmsText.style.color='var(--amber)'; } },
+/*1*/ {comp:2, tag:'RECEPCIÓN', title:'2. El proceso físico no cambia', desc:'El montacargas (proceso actual de Nestlé) toma el pallet en el muelle de recepción. La tecnología se añade sobre este proceso, no lo reemplaza.', run(){ target.fkA={x:-18,z:18,lift:0,rot:0}; setCam(fkA.position, new THREE.Vector3(14,10,14)); wmsText.innerText='PREPARANDO INGRESO'; wmsText.style.color='var(--amber)'; } },
 
-/*3*/ {comp:1, tag:'PASO 2 · TAG', title:'3. El operario coloca el tag RFID reutilizable', desc:'Antes de que el pallet cruce el portal, el operario toma un tag del stock reutilizable y lo engancha al pallet. Este es el único paso nuevo para el personal: enganchar una tarjeta, no escanear nada.', run(justEntered){
-    setCam(new THREE.Vector3(-17,1.2,16), new THREE.Vector3(6,4,6), true);
-    if(justEntered){
-      flyTagTarget = {from:new THREE.Vector3(-19.5,0.6,15), to:new THREE.Vector3(-15,1.3,16), start:performance.now(), dur:900};
-      setTimeout(()=>{ palletIn.rfidLabel.visible=true; flyTag.visible=false; pushAlert('Operario coloca el tag reutilizable en el pallet','ok'); bumpEvents(3); }, 950);
-    }
-  } },
+/*2*/ {comp:1, tag:'COMPONENTE 1', title:'3. Tags Reutilizables ($0 Consumibles)', desc:'El operario engancha un tag RFID reutilizable (tipo tarjeta) al pallet. Al no ser un sticker desechable, el costo de consumibles por las 24.000 posiciones se reduce prácticamente a cero.', run(just){ target.fkA={x:-18,z:17.5,lift:0,rot:0}; setCam(new THREE.Vector3(-19,1.5,16.5), new THREE.Vector3(7,5,8)); if(just){ flyTagTarget = {from:new THREE.Vector3(-21,1.0,16.5), to:new THREE.Vector3(-18,1.4,17.5), start:performance.now(), dur:900}; setTimeout(()=>{ palletIn.rfidLabel.visible=true; pushAlert('Tag reutilizable asignado al pallet en recepción.','ok'); updateEv(1); }, 900); } } },
 
-/*4*/ {comp:1, tag:'PASO 3 · PORTAL', title:'4. El pallet cruza el Portal RFID de entrada', desc:'El montacargas avanza y el pallet, ya con su tag puesto, cruza el arco del portal. El ingreso queda registrado en SAP en milisegundos — el montacargas no se detiene para esto.', run(justEntered){
-    target.fkA={x:-15,z:8,lift:0};
-    setCam(new THREE.Vector3(portalIn.position.x, 2.5, portalIn.position.z), new THREE.Vector3(11,7,12), true);
-    if(justEntered){ setTimeout(()=>{ pushAlert('Portal 1: tag reutilizable asignado — pallet '+inCode,'ok'); bumpEvents(3); bumpScan(); wmsText.innerText='PORTAL 1: INGRESO REGISTRADO'; wmsText.style.color='var(--purple)'; }, 700); }
-  } },
+/*3*/ {comp:1, tag:'COMPONENTE 1', title:'4. Portal RFID Dinámico', desc:'El montacargas cruza el portal sin detenerse. Las antenas leen el tag masivamente y registran el ingreso en SAP al instante.', run(just){ target.fkA={x:-18,z:8,lift:0,rot:0}; setCam(portalIn.position, new THREE.Vector3(12,8,12)); if(just){ setTimeout(()=>{ portalIn.beam.material.opacity=0.8; pushAlert('Portal 1: Lectura masiva. Ingreso registrado.','ok'); updateEv(3); wmsText.innerText='PORTAL M1: REGISTRO OK'; wmsText.style.color='var(--purple)'; setTimeout(()=>portalIn.beam.material.opacity=0, 600); }, 800); } } },
 
-/*5*/ {comp:2, tag:'PASO 4 · CANASTILLA', title:'5. El montacargas activa la canastilla y sube el pallet', desc:'La posición asignada está en un nivel alto del rack. El montacargas se ubica frente a la columna y la canastilla eleva el pallet — el mismo procedimiento que el personal ya conoce.', run(){
-    target.fkA={x:-3,z:4,lift:0};
-    setCam(fkA.position, new THREE.Vector3(8,6,9), false);
-    wmsText.innerText='CANASTILLA EN POSICIÓN'; wmsText.style.color='var(--amber)';
-  } },
+/*4*/ {comp:2, tag:'ALMACENAJE', title:'5. Elevación con canastilla', desc:'El montacargas se ubica frente al rack y eleva la canastilla hacia el nivel superior (Nivel 2), ejecutando el trabajo en altura tradicional.', run(){ target.fkA={x:-3.5,z:4,lift:0,rot:0}; setCam(fkA.position, new THREE.Vector3(10,8,12)); wmsText.innerText='EN TRÁNSITO A RACK'; } },
 
-/*6*/ {comp:3, tag:'PASO 5 · UBICACIÓN', title:'6. Se coloca el pallet; el sensor ToF confirma "ocupado"', desc:'La canastilla termina de subir, el pallet se coloca en su posición y el sensor láser del rack detecta la obstrucción física al instante — sin usar RFID para esto, solo el sensor de esa posición.', run(justEntered){
-    target.fkA={x:-3,z:4,lift:1};
-    setCam(new THREE.Vector3(-3,2.6,-1), new THREE.Vector3(7,5,8), true);
-    if(justEntered){
-      setTimeout(()=>{
-        palletIn._carrier=null; palletIn._placed=true; palletIn.position.copy(ingresoSlot);
-        racks[0].tofByLevel[1].material.color.setHex(0x4facfe); racks[0].tofByLevel[1].material.opacity=0.85;
-        pushAlert('Sensor ToF: posición RAC A2 N1 ocupada','ok'); bumpScan();
-        wmsText.innerText='SENSOR ToF: POSICIÓN OCUPADA'; wmsText.style.color='var(--amber)';
-        setTimeout(()=>{ target.fkA={x:-3,z:4,lift:0}; },300);
-      }, 700);
-    }
-  } },
+/*5*/ {comp:2, tag:'COMPONENTE 2', title:'6. Sensor ToF confirma ubicación', desc:'Al colocar el pallet, el sensor láser Time-of-Flight (ToF) de esa posición detecta la ocupación y avisa a SAP. No se necesitó que el dron volara para saber que el espacio se llenó.', run(just){ target.fkA={x:-3.5,z:1,lift:1,rot:0}; setCam(ingresoSlot, new THREE.Vector3(8,6,10)); if(just){ setTimeout(()=>{ palletIn._carrier=null; palletIn.position.copy(ingresoSlot); racks[0].tofByLevel[1].material.color.setHex(0x00b0ff); racks[0].tofByLevel[1].material.opacity=0.9; pushAlert('Sensor ToF: RAC A1 N2 Ocupado.','ok'); updateEv(5); wmsText.innerText='ToF: POSICIÓN OCUPADA'; wmsText.style.color='var(--accent2)'; setTimeout(()=>{target.fkA.z=4; target.fkA.lift=0;}, 800); }, 1200); } } },
 
-/*7*/ {comp:2, tag:'PASO 6 · DESPACHO', title:'7. Se prepara otro pallet para despacho', desc:'Mientras tanto, otro pallet que ya estaba en bodega —con su tag puesto desde un ciclo anterior— está listo para salir. El montacargas B se acerca a recogerlo.', run(){ target.fkB={x:6,z:-9,lift:0}; setCam(fkB.position, new THREE.Vector3(10,8,11), false); wmsText.innerText='PREPARANDO DESPACHO'; wmsText.style.color='var(--red)'; } },
+/*6*/ {comp:1, tag:'DESPACHO', title:'7. Retiro de Tag para reutilización', desc:'En la zona de salida, otro montacargas lleva un pallet hacia el camión. Antes de cruzar el Portal 2, el operario retira el tag para que vuelva al stock.', run(just){ target.fkB={x:15,z:18,lift:0,rot:0}; setCam(portalOut.position, new THREE.Vector3(12,8,12)); if(just){ setTimeout(()=>{ flyTagTarget={from:new THREE.Vector3(15,1.4,17), to:new THREE.Vector3(-21,1.0,16.5), start:performance.now(), dur:1000}; palletOut.rfidLabel.visible=false; pushAlert('Tag retirado. Retorna al loop de reutilización.','ok'); }, 800); setTimeout(()=>{ portalOut.beam.material.opacity=0.8; wmsText.innerText='PORTAL M2: SALIDA OK'; wmsText.style.color='var(--red)'; setTimeout(()=>portalOut.beam.material.opacity=0, 600); }, 1800); } } },
 
-/*8*/ {comp:1, tag:'PASO 7 · RETIRO DE TAG', title:'8. Antes del camión, el operario retira el tag', desc:'El montacargas lleva el pallet hacia el Portal 2. Justo antes de cargarlo al camión, el operario retira el tag RFID — ese mismo tag vuelve al stock y queda listo para el siguiente pallet que entre.', run(justEntered){
-    target.fkB={x:14,z:16,lift:0};
-    setCam(new THREE.Vector3(portalOut.position.x, 2.5, portalOut.position.z), new THREE.Vector3(11,7,12), true);
-    if(justEntered){
-      setTimeout(()=>{
-        flyTagTarget = {from:new THREE.Vector3(14,1.3,16), to:new THREE.Vector3(-19.5,0.6,15), start:performance.now(), dur:1000};
-        palletOut.rfidLabel.visible=false;
-        pushAlert('Operario retira el tag — vuelve al stock reutilizable','ok'); bumpEvents(3);
-      }, 500);
-      setTimeout(()=>{ portalOut.beam.material.opacity=0.7; pushAlert('Portal 2: salida registrada — pallet '+outCode,'ok'); bumpEvents(3); bumpScan(); wmsText.innerText='PORTAL 2: SALIDA REGISTRADA'; wmsText.style.color='var(--red)'; setTimeout(()=>portalOut.beam.material.opacity=0,500); }, 1600);
-    }
-  } },
+/*7*/ {comp:2, tag:'COMPONENTE 2', title:'8. Anomalía: Retiro sin orden', desc:'De pronto, en la Zona B, un pallet es retirado físicamente pero SAP no tiene una orden de salida. El sensor ToF detecta el espacio vacío instantáneamente y dispara una alerta crítica.', run(just){ setCam(dynamicPalletAnomaly.position, new THREE.Vector3(10,8,12)); if(just){ setTimeout(()=>{ dynamicPalletAnomaly.visible=false; racks[1].tofByLevel[1].material.color.setHex(0xff5252); racks[1].tofByLevel[1].material.opacity=0.9; pushAlert('ALERTA ToF: Retiro no autorizado RAC B2 N2','alert'); setDashAcc('98.9%','var(--red)'); wmsText.innerText='¡DISCREPANCIA ToF DETECTADA!'; wmsText.style.color='var(--red)'; }, 800); } } },
 
-/*9*/ {comp:3, tag:'PASO 8 · ANOMALÍA', title:'9. Anomalía: un pallet se retira sin autorización', desc:'A diferencia de los pasos anteriores, aquí alguien retira un pallet sin que exista una orden de salida en el sistema. No importa cómo lo movieron: el sensor ToF detecta la interrupción del láser al instante.', run(justEntered){
-    setCam(new THREE.Vector3(0,2,-6), new THREE.Vector3(9,7,10), true);
-    if(justEntered){
-      setTimeout(()=>{
-        dynamicPalletAnomaly.visible=false;
-        racks[1].tofByLevel[1].material.color.setHex(0xef5f52); racks[1].tofByLevel[1].material.opacity=0.85;
-        pushAlert('Retiro sin orden — RAC B2 N2. Se activa auditoría','alert'); setDashAcc('98.9%','var(--amber)');
-        wmsText.innerText='¡ALERTA ToF! RETIRO NO REGISTRADO'; wmsText.style.color='var(--red)';
-      }, 700);
-    }
-  } },
+/*8*/ {comp:4, tag:'COMPONENTE 4', title:'9. Acumulación de eventos', desc:'En lugar de tener al dron patrullando todo el día y gastando batería, el sistema acumula los eventos del ToF. Al llegar a 15 eventos (o una alerta crítica), se activa el despliegue.', run(just){ setCam(new THREE.Vector3(0,3,-5), new THREE.Vector3(14,10,18)); if(just){ let c=evCount; anomalyInterval = setInterval(()=>{ if(c<15){ c++; updateEv(c); } else { clearInterval(anomalyInterval); pushAlert('15/15 Eventos. Autorizando despegue Enjambre Charlie...','warn'); wmsText.innerText='DESPLEGANDO DRON CHARLIE'; wmsText.style.color='var(--amber)'; } }, 150); } } },
 
-/*10*/ {comp:5, tag:'PASO 9A · ESCANEO', title:'10. El dron despega: escaneo cíclico rutinario', desc:'Antes de atender la alerta, Charlie ya ejecutaba su recorrido normal, leyendo el código de barras de cada posición para confirmar existencias contra SAP.', run(justEntered){
-    target.drone = cyclicStop1;
-    setCam(drone.position, new THREE.Vector3(7,5,8), true);
-    if(justEntered){ setTimeout(()=>{ dCamLight.material.opacity=0.4; wmsText.innerText='CHARLIE: LECTURA SSCC '+cyclicStop1.code; wmsText.style.color='var(--accent2)'; pushAlert('Escaneo cíclico OK — '+cyclicStop1.mat,'ok'); bumpScan(); }, 900); }
-  } },
+/*9*/ {comp:4, tag:'COMPONENTE 4', title:'10. Despegue del Enjambre Charlie', desc:'El dron Charlie-1 despega. No vuela a ciegas; tiene las coordenadas exactas de los 15 huecos reportados por los sensores ToF.', run(just){ target.drone = {x:0, y:2.5, z:-4}; setCam(target.drone, new THREE.Vector3(8,5,10)); if(just){ setTimeout(()=>{ pushAlert('Charlie-1 en vuelo hacia Zona B.','ok'); }, 500); } } },
 
-/*11*/ {comp:4, tag:'PASO 9B · FRÍO', title:'11. El dron verifica la cadena de frío al pasar', desc:'En el mismo vuelo, Charlie cruza la zona fría y usa su cámara térmica para confirmar que la temperatura del rack refrigerado sigue dentro de rango — sin necesidad de un vuelo aparte.', run(justEntered){
-    target.drone = coldCheckPoint;
-    dCamLight.material.opacity=0;
-    setCam(drone.position, new THREE.Vector3(7,5,8), true);
-    if(justEntered){ setTimeout(()=>{ wmsText.innerText='CADENA DE FRÍO: -4.6°C · DENTRO DE RANGO'; wmsText.style.color='#3ec6e0'; pushAlert('Temperatura verificada — zona fría OK','ok'); }, 900); }
-  } },
+/*10*/ {comp:3, tag:'COMPONENTE 3', title:'11. Verificación de Cadena de Frío', desc:'En su ruta hacia la anomalía, el dron pasa junto a la Zona Fría. Aprovechando el viaje, activa su cámara térmica para validar que los termohidrómetros IoT marcan la temperatura correcta (-4.6°C).', run(just){ target.drone = {x:0, y:2.8, z:-14.5}; setCam(target.drone, new THREE.Vector3(7,4,9)); if(just){ setTimeout(()=>{ drone._cam.material.color.setHex(0x00e5ff); drone._cam.material.opacity=0.6; pushAlert('Lectura Térmica: Zona Fría en rango óptimo.','ok'); wmsText.innerText='CADENA DE FRÍO: CONFIRMADA'; wmsText.style.color='#00e5ff'; }, 1000); } } },
 
-/*12*/ {comp:5, tag:'PASO 9C · AUDITORÍA', title:'12. El dron audita la anomalía: enfoque total', desc:'Ahora sí, Charlie atiende la alerta pendiente. Proyecta su sensor de rango para confirmar la ubicación exacta y usa su cámara para leer el código de barras — el respaldo cuando el tag ya no está en el pallet.', run(justEntered){
-    target.drone = anomalyPoint;
-    setCam(anomalyPoint, new THREE.Vector3(5,4,6), true);
-    if(justEntered){ setTimeout(()=>{ dCamLight.material.opacity=0.4; dRangeLaser.material.opacity=0.8; wmsText.innerText='CHARLIE: SENSOR DE RANGO Y VISIÓN...'; wmsText.style.color='var(--accent2)'; pushAlert('Auditoría confirmada: coincide con SAP','ok'); setDashAcc('99.4%','#0f6e56'); }, 1000); }
-  } },
+/*11*/ {comp:4, tag:'COMPONENTE 4', title:'12. Auditoría: LiDAR + RGB', desc:'Charlie llega al punto de la anomalía. Usa su sensor de rango (LiDAR verde) para calcular la ubicación exacta (Rack B2, Nivel 2) y su cámara RGB para leer el código de barras impreso SSCC.', run(just){ target.drone = {x:0, y:2.35, z:-8}; setCam(new THREE.Vector3(0, 2.35, -10.5), new THREE.Vector3(6,3,7)); if(just){ setTimeout(()=>{ drone._cam.material.color.setHex(0xffffff); drone._cam.material.opacity=0.4; drone._lidar.material.opacity=0.9; pushAlert('LiDAR: RAC B2 N2. Cámara: Vacío confirmado.','warn'); wmsText.innerText='CHARLIE: AUDITORÍA COMPLETADA'; wmsText.style.color='var(--accent)'; }, 1200); } } },
 
-/*13*/ {comp:6, tag:'CICLO COMPLETADO', title:'13. Torre de control: todo sincronizado con SAP', desc:'La app y la torre de control ya reflejan el resultado: la discrepancia quedó resuelta y SAP tiene la ubicación correcta, sin que nadie haya caminado hasta allá. El dron vuelve a su base; los montacargas siguen su operación normal.', run(justEntered){
-    target.drone = {x:-18,y:0,z:-8};
-    dCamLight.material.opacity=0; dRangeLaser.material.opacity=0;
-    racks[1].tofByLevel[1].material.color.setHex(0x4facfe); racks[1].tofByLevel[1].material.opacity=0.3;
-    setCam(new THREE.Vector3(-4,2,4), new THREE.Vector3(22,15,25), false);
-    if(justEntered){ wmsText.innerText='WMS SINCRONIZADO: EXACTITUD 99.4%'; wmsText.style.color='var(--accent)'; }
-  } },
+/*12*/ {comp:6, tag:'COMPONENTE 6', title:'13. Cruce de datos y Actualización SAP', desc:'El dron confirma que físicamente el espacio está vacío, cruzando el dato con el sensor ToF. El sistema actualiza SAP WMS de forma autónoma corrigiendo el inventario. La exactitud vuelve al 99.4%.', run(just){ target.drone = {x:-22, y:0.1, z:-10}; setCam(new THREE.Vector3(0,3,0), new THREE.Vector3(20,15,25)); if(just){ drone._cam.material.opacity=0; drone._lidar.material.opacity=0; racks[1].tofByLevel[1].material.color.setHex(0x00b0ff); racks[1].tofByLevel[1].material.opacity=0.25; setDashAcc('99.4%','var(--accent)'); pushAlert('SAP WMS actualizado automáticamente.','ok'); wmsText.innerText='SAP WMS: SINCRONIZADO'; } } },
+
+/*13*/ {comp:5, tag:'FIN', title:'14. Torre de Control Integral', desc:'Todo el proceso fue monitoreado remotamente. Ahorramos 80% de batería del dron, $0 en consumibles RFID por posición, y protegimos la cadena de frío, todo integrado nativamente al Gemelo Digital.', run(){ setCam(new THREE.Vector3(0,2,5), new THREE.Vector3(26,20,30)); wmsText.innerText='CICLO COMPLETADO'; wmsText.style.color='var(--accent)'; } }
 ];
 
-let currentStep = 0; // índice 0-based
+let currentStep = 0;
 
 function renderStep(justEntered){
   const s = STEPS[currentStep];
   setActiveComponent(s.comp);
   tagStep.innerText = s.tag;
-  tagStep.style.background = ['#9b8cff','#f0a834','#ef5f52','#4facfe','#41c99a','#0f6e56'][s.comp-1] || '#9b8cff';
-  tTitle.innerText = s.title;
-  tDesc.innerText = s.desc;
+  tagStep.style.background = ['#b388ff','#ffca28','#00e5ff','#00b0ff','#00e676','#00b0ff'][s.comp-1] || '#b388ff';
+  document.getElementById('story-title').innerText = s.title;
+  document.getElementById('story-desc').innerText = s.desc;
   stepCounterEl.innerText = 'Paso '+(currentStep+1)+' de '+STEPS.length;
   document.getElementById('btn-prev').disabled = currentStep===0;
   document.getElementById('btn-next').innerText = currentStep===STEPS.length-1 ? 'Reiniciar ▶' : 'Siguiente ▶';
   s.run(justEntered);
 }
-function nextStep(){
-  if(currentStep < STEPS.length-1){ currentStep++; renderStep(true); }
-  else { restart(); }
-}
+
+function nextStep(){ if(currentStep < STEPS.length-1){ currentStep++; renderStep(true); } else { restart(); } }
 function prevStep(){ if(currentStep>0){ currentStep--; renderStep(true); } }
+
 function restart(){
-  currentStep=0;
-  eventCounter=0; document.getElementById('dash-evtxt').innerText='0/15'; document.getElementById('dash-evbar').style.width='0%';
-  document.getElementById('dash-alerts').innerHTML='<div class="db-alert ok">Sistema reiniciado. Esperando el primer evento.</div>';
-  setDashAcc('99.4%','#0f6e56'); document.getElementById('dash-scan').innerText='0';
-  target.fkA={x:-15,z:25,lift:0}; target.fkB={x:6,z:-11,lift:0}; target.drone={x:-18,y:0,z:-8};
-  palletIn.position.set(-15,0.62,25); palletIn._carrier=fkA; palletIn._placed=false; palletIn.rfidLabel.visible=false;
-  palletOut.position.set(6,0.62,-8); palletOut._carrier=null; palletOut._placed=true; palletOut.rfidLabel.visible=true;
-  dynamicPalletAnomaly.position.set(0,2,-8); dynamicPalletAnomaly.visible=true;
-  racks[0].tofByLevel[1].material.color.setHex(0x4facfe); racks[0].tofByLevel[1].material.opacity=0.3;
-  racks[1].tofByLevel[1].material.color.setHex(0x4facfe); racks[1].tofByLevel[1].material.opacity=0.3;
-  flyTag.visible=false; flyTagTarget=null;
+  currentStep=0; updateEv(0); clearInterval(anomalyInterval);
+  document.getElementById('dash-alerts').innerHTML='<div class="db-alert ok">Sistema reiniciado. Esperando eventos.</div>';
+  setDashAcc('99.4%','var(--accent)');
+  target.fkA={x:-18,z:26,lift:0,rot:0}; target.fkB={x:7.5,z:-12,lift:0,rot:0}; target.drone=null; drone.position.set(-22,0,-10);
+  palletIn.position.set(-18,0.7,27.1); palletIn._carrier=fkA; palletIn._placed=false; palletIn.rfidLabel.visible=false;
+  palletOut.position.set(7.5,0.15,-10.5); palletOut._carrier=null; palletOut._placed=true; palletOut.rfidLabel.visible=true; fkB._hasPallet=false;
+  dynamicPalletAnomaly.visible=true;
+  racks[0].tofByLevel[1].material.color.setHex(0x00b0ff); racks[0].tofByLevel[1].material.opacity=0.25;
+  racks[1].tofByLevel[1].material.color.setHex(0x00b0ff); racks[1].tofByLevel[1].material.opacity=0.25;
+  drone._cam.material.opacity=0; drone._lidar.material.opacity=0;
   renderStep(true);
 }
 
-// ================= LOOP =================
+// Lógica de Movimiento Físico sin fallas (Rotación matemática)
+function updateForklift(fk, tgt) {
+  const dx = tgt.x - fk.position.x; const dz = tgt.z - fk.position.z;
+  fk.position.x += dx * 0.05; fk.position.z += dz * 0.05;
+  if (Math.abs(dx) > 0.05 || Math.abs(dz) > 0.05) {
+    let targetRot = Math.atan2(dx, dz);
+    let diff = targetRot - fk.rotation.y;
+    while(diff < -Math.PI) diff += Math.PI*2; while(diff > Math.PI) diff -= Math.PI*2;
+    fk.rotation.y += diff * 0.1;
+  }
+  fk._liftLevel += (tgt.lift - fk._liftLevel)*0.08;
+  fk._carriage.position.y = 0.7 + fk._liftLevel*1.65;
+}
+
 const clock = new THREE.Clock();
 function animate(){
   requestAnimationFrame(animate);
   const rawTime = clock.getElapsedTime();
-  animateContext(rawTime);
-  document.getElementById('dash-temp').innerText = (-4.6 - Math.sin(rawTime*0.3)*0.2).toFixed(1)+'°C';
+  document.getElementById('dash-temp').innerText = (-4.6 - Math.sin(rawTime*0.5)*0.1).toFixed(1)+'°C';
 
-  // mover montacargas hacia su objetivo (x,z,lift)
-  fkA.position.x += (target.fkA.x - fkA.position.x)*0.05;
-  fkA.position.z += (target.fkA.z - fkA.position.z)*0.05;
-  fkA._liftLevel += (target.fkA.lift - fkA._liftLevel)*0.06;
-  fkA._carriage.position.y = 0.62 + fkA._liftLevel*2.0;
-  fkA._light.material.color.set(Math.sin(rawTime*6)>0?'#ffcf3f':'#7a5410');
+  updateForklift(fkA, target.fkA); fkA._light.material.color.set(Math.sin(rawTime*8)>0?'#ffca28':'#5c4000');
+  updateForklift(fkB, target.fkB); fkB._light.material.color.set(Math.sin(rawTime*8+2)>0?'#ffca28':'#5c4000');
 
-  fkB.position.x += (target.fkB.x - fkB.position.x)*0.05;
-  fkB.position.z += (target.fkB.z - fkB.position.z)*0.05;
-  fkB._liftLevel += (target.fkB.lift - fkB._liftLevel)*0.06;
-  fkB._carriage.position.y = 0.62 + fkB._liftLevel*2.0;
-  fkB._light.material.color.set(Math.sin(rawTime*6+2)>0?'#ffcf3f':'#7a5410');
-
-  // pallets siguen a su montacargas si están siendo transportados
+  // Lógica de acoplamiento de pallets (Falla visual corregida usando trigonometría)
   if(palletIn._carrier && !palletIn._placed){
-    palletIn.position.x += (palletIn._carrier.position.x - palletIn.position.x)*0.12;
-    palletIn.position.z += (palletIn._carrier.position.z + 0.9 - palletIn.position.z)*0.12;
+    palletIn.position.x = palletIn._carrier.position.x + Math.sin(palletIn._carrier.rotation.y)*1.1;
+    palletIn.position.z = palletIn._carrier.position.z + Math.cos(palletIn._carrier.rotation.y)*1.1;
     palletIn.position.y = palletIn._carrier._carriage.position.y;
+    palletIn.rotation.y = palletIn._carrier.rotation.y;
   }
-  if(palletOut._carrier===fkB || (!palletOut._placed)){
-    palletOut.position.x += (fkB.position.x - palletOut.position.x)*0.12;
-    palletOut.position.z += (fkB.position.z + 0.9 - palletOut.position.z)*0.12;
+  
+  // Acoplar fkB al pallet de salida en el paso 6
+  if(currentStep === 6 && !fkB._hasPallet && Math.abs(fkB.position.z - 18) > 5) {
+      if(Math.abs(fkB.position.z - palletOut.position.z) < 2) { fkB._hasPallet = true; palletOut._carrier = fkB; palletOut._placed = false; }
+  }
+  if(palletOut._carrier === fkB){
+    palletOut.position.x = fkB.position.x + Math.sin(fkB.rotation.y)*1.1;
+    palletOut.position.z = fkB.position.z + Math.cos(fkB.rotation.y)*1.1;
     palletOut.position.y = fkB._carriage.position.y;
+    palletOut.rotation.y = fkB.rotation.y;
   }
 
-  // tag volador
   if(flyTagTarget){
-    const el = performance.now() - flyTagTarget.start;
-    const ft = Math.min(1, el/flyTagTarget.dur);
-    flyTag.visible = true;
-    flyTag.position.lerpVectors(flyTagTarget.from, flyTagTarget.to, ft);
-    flyTag.position.y += Math.sin(ft*Math.PI)*0.6;
+    const ft = Math.min(1, (performance.now() - flyTagTarget.start)/flyTagTarget.dur);
+    flyTag.visible = true; flyTag.position.lerpVectors(flyTagTarget.from, flyTagTarget.to, ft);
+    flyTag.position.y += Math.sin(ft*Math.PI)*0.8;
     if(ft>=1){ flyTag.visible=false; flyTagTarget=null; }
   }
 
-  // dron: mover hacia target.drone si existe
   if(target.drone){
-    drone.position.x += (target.drone.x - drone.position.x)*0.05;
-    drone.position.y += ((target.drone.y!==undefined?target.drone.y:drone.position.y) - drone.position.y)*0.05;
-    drone.position.z += (target.drone.z - drone.position.z)*0.05;
-    if(target.drone.x!==undefined) drone.lookAt(target.drone.x, target.drone.y||drone.position.y, target.drone.z);
+    drone.position.lerp(new THREE.Vector3(target.drone.x, target.drone.y, target.drone.z), 0.05);
+    let ddx = target.drone.x - drone.position.x; let ddz = target.drone.z - drone.position.z;
+    if(Math.abs(ddx)>0.1 || Math.abs(ddz)>0.1) {
+       let dr = Math.atan2(ddx, ddz); let ddiff = dr - drone.rotation.y;
+       while(ddiff < -Math.PI) ddiff += Math.PI*2; while(ddiff > Math.PI) ddiff -= Math.PI*2;
+       drone.rotation.y += ddiff * 0.1;
+    }
   }
-  drone.children.forEach(c=>{ if(c.geometry && c.geometry.type==='CylinderGeometry' && c!==dRangeLaser) c.rotation.y+=0.5; });
-  if(drone.position.y>0.1){ drone.position.y += Math.sin(rawTime*4)*0.004; }
+  drone.children.forEach(c=>{ if(c.geometry && c.geometry.type==='CylinderGeometry' && c!==drone._lidar) c.rotation.y+=0.6; });
+  if(drone.position.y>0.1) drone.position.y += Math.sin(rawTime*5)*0.005;
 
-  // pallet en anomalía: pequeño efecto idle si visible
-  if(dynamicPalletAnomaly.visible){ dynamicPalletAnomaly.rotation.y = Math.sin(rawTime*1.2)*0.02; }
-
-  updateCamera();
-  renderer.render(scene, camera);
+  updateCamera(); renderer.render(scene, camera);
 }
 
 window.addEventListener('resize', () => {
   const w = document.getElementById('sim-container').clientWidth;
-  camera.aspect = w / window.innerHeight;
-  camera.updateProjectionMatrix();
+  camera.aspect = w / window.innerHeight; camera.updateProjectionMatrix();
   renderer.setSize(w, window.innerHeight);
 });
 
-renderStep(true);
-animate();
+renderStep(true); animate();
 </script>
 </body>
 </html>
